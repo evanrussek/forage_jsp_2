@@ -9,42 +9,46 @@ var instruction_pagelinks_a = ['Stimuli/forage_instructions/Slide1.jpg',
 var instruction_pagelinks_b = ['Stimuli/forage_instructions/Slide7.jpg'];
 
 var instruction_pagelinks_c = ['Stimuli/forage_instructions/Slide8.jpg',
-															'Stimuli/forage_instructions/Slide9.jpg']
+															'Stimuli/forage_instructions/Slide9.jpg'];
 
 var practice_trial2 = {
   type: 'travel-mkre',
   start_reward: 75,
   decay: .98,
-  n_travel_steps: 18,
+  n_travel_steps: 16,
   press_success_prob_travel: .8,
   press_success_prob_harvest: .5,
   reward_noise: 2.5,
   start_reward_noise: 4,
-  time_min: 1,
-  travel_key_seq: ['u'],
-  travel_prompt: ["Travel: repeatedly press 'u'"],
-  harvest_key_seq: ['a'],
-  harvest_prompt:  ["Harvest: repeatedly press 'a' (left pinky) while holding down  't' , 'e' (left) and '0', '9', 'm' (right). Travel: repeatedly press 'u'"],
-  harvest_held_down_keys: ['0', '9', 'm','t','e'], //  [85, 73, 79, 80, 78]
-  show_prompt: true
+  time_min: .01,
+  travel_key_seq: ['a'],
+  travel_prompt: ["Repeatedly press 'a' (left pinky) while holding down  't' , 'e' (left) and '0', '9', 'm' (right) to travel"],
+  harvest_key_seq: ['u'],
+  harvest_prompt:  ["Press 'u' to harvest or 'a' to travel"],
+  travel_held_down_keys: ['0', '9', 'm','t','e'], //  [85, 73, 79, 80, 78]
+  show_prompt: true,
+	show_change_message: false,
+	use_last_person_pos: false
 }
 
 var practice_trial1 = { // this is the easy condition...
   type: 'travel-mkre',
   start_reward: 75,
   decay: .98,
-  n_travel_steps: 18,
+  n_travel_steps: 16,
   press_success_prob_travel: .75,
   press_success_prob_harvest: .5,
   reward_noise: 2.5,
   start_reward_noise: 4,
-  time_min: 1,
-  travel_key_seq: ['u'],
-	harvest_key_seq: ['f'],
-  travel_prompt: ["Repeatedly press 'u' to travel"],
-  harvest_prompt:  ["Harvest: repeatedly press 'f' (left index) while holding down '0', '9', 'm' (right), Travel: repeatedly press 'u'"],
-  harvest_held_down_keys: ['0', '9', 'm'],
-  show_prompt: true
+  time_min: .01,
+  travel_key_seq: ['f'],
+	harvest_key_seq: ['u'],
+  travel_prompt: ["Repeatedly press 'f' (left index) while holding down '0', '9', 'm' (right) to travel"],
+  harvest_prompt:  ["Press 'u' to harvest or 'f' to travel"],
+  travel_held_down_keys: ['0', '9', 'm'],
+  show_prompt: true,
+	show_change_message: false,
+	use_last_person_pos: false
 }
 
 var pages_a = [];
@@ -83,22 +87,22 @@ var instruction_pages_c = {
 var questions = ["How long will each round last?", // 1
 				"What determines your bonus?", // 2
 				"How do you travel to a tree?", // 3
-				"Is the Harvest key the same in every round?", // 4
+				"Is the TRAVEL sequence the same in every round?", // 4
 				"When you are at a tree, how do you collect points?", // 5
 				"What happens to the number of points a tree provides over time?", // 6
 				"When you are at a tree, how do you leave the tree?", // 7
-				"What factors makes the different environments different?",
-				"How many points do trees start with in MEDIUM tree richness environments?"]; // 8
+				"What factors are different between the two rounds?",
+				"What might change when the environment setting changes within a round?"]; // 8
 
-var options1 =  ['1 minute', '1.5 minutes', '2 minutes', '2.5 minutes', '3 minutes'];
+var options1 =  ['3 minutes', '5 minutes', '7 minutes', '9 minutes', '11 minutes'];
 var correct1 = 3;
 
-var options2 = ['Total number of points collected over the entire experiment',
+var options2 = ['Average number of points collected accross the two rounds',
 				'Total number of points collected on a randomly selected round',
 				'Highest single point value received on a randomly selected round'];
-var correct2 = 1;
+var correct2 = 0;
 
-var options3 = ['Repeatedly entering the Travel key',
+var options3 = ['Repeatedly entering the Travel key while holding down the hold-down keys',
 				'Repeatedly entering the the HARVEST key',
 				'Entering the TRAVEL key, once',
 				'Entering the HARVEST key, once'];
@@ -107,8 +111,8 @@ var correct3 = 0;
 var options4 = ['yes', 'no'];
 var correct4 = 1;
 
-var options5 = ['Repeatedly entering the Travel',
-				'Repeatedly entering the the HARVEST key while holding down the hold-down keys',
+var options5 = ['Repeatedly entering the Travel key while holding down the hold-down keys',
+				'Repeatedly entering the the HARVEST key',
 				'Entering the TRAVEL key, once',
 				'Entering the HARVEST key, once'];
 var correct5 = 1;
@@ -125,12 +129,11 @@ var correct7 = 0;
 
 var options8 = ['Number of button presses required to travel to a new tree.',
 					'The rate at which the number of points at a tree falls.',
-				'Difficulty of Harvesting and Tree point richness for number of the points it starts at.'];
+				'Which travel keys to use.'];
 var correct8 = 2;
 
-var options9 = [60,
-								90,
-								120];
+var options9 = ["Which travel keys to use.",
+								"The point value that trees start at."];
 var correct9 = 1;
 
 
@@ -143,6 +146,7 @@ var corr_string = '{"Q0":' + '"'+options1[correct1]+'",' + '"Q1":' + '"'+options
 			+ '"Q8":' + '"'+options9[correct9]+'"' + '}';
 
 var preamble = ["<p align='center'><b>Please answer every question. Answering 'I do not know' or answering incorrectly will require you return to the beginning of the instructions. </b></p>"];
+
 
 var instruction_correct = false;
 var instruction_check = {
@@ -212,6 +216,7 @@ var conditional_splash = {
   }
 }
 
+
 var intro_w_trials = [];
 intro_w_trials.push(instruction_pages_a);
 intro_w_trials.push(practice_trial1);
@@ -248,7 +253,7 @@ var finish_instruc_screen = {
 	//    button_html: '<button class="jspsych-btn" style="display:none">%choice%</button>',
 	choices: ['Begin the task!'],
 	is_html: true,
-	stimulus: 'You passed the quiz! Great work. The task will take about 17 minutes. Press the button to begin.'
+	stimulus: 'You passed the quiz! Great work. The task will take about 18 minutes. Press the button to begin.'
 }
 
 intro_w_trials.push(finish_instruc_screen);

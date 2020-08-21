@@ -47,7 +47,7 @@ jsPsych.plugins["travel-mkre"] = (function() {
         type: jsPsych.plugins.parameterType.STRING,
         default: undefined
       },
-      harvest_held_down_keys:{
+      travel_held_down_keys:{
         type: jsPsych.plugins.parameterType.STRING,
         default: undefined
       },
@@ -70,10 +70,21 @@ jsPsych.plugins["travel-mkre"] = (function() {
       show_prompt:{
         type: jsPsych.plugins.parameterType.INT,
         default: true
+      },
+      show_change_message:{
+        type: jsPsych.plugins.parameterType.BOOL,
+        default: true
+      },
+      use_last_person_pos:{
+        type: jsPsych.plugins.parameterType.BOOL,
+        default: true
       }
   }}
 
   plugin.trial = function(display_element, trial) {
+
+
+
     var total_points = 0;
 
     par = define_parameters('trial');
@@ -99,18 +110,18 @@ jsPsych.plugins["travel-mkre"] = (function() {
 
 
     // let's just try to print which keys are down...
-    harvest_held_down_keys = trial.harvest_held_down_keys;
-    harvest_held_down_key_codes = [];
-    for (var i = 0; i<harvest_held_down_keys.length; i++){
-      harvest_held_down_key_codes.push(jsPsych.pluginAPI.convertKeyCharacterToKeyCode(harvest_held_down_keys[i]))
+    travel_held_down_keys = trial.travel_held_down_keys;
+    travel_held_down_key_codes = [];
+    for (var i = 0; i<travel_held_down_keys.length; i++){
+      travel_held_down_key_codes.push(jsPsych.pluginAPI.convertKeyCharacterToKeyCode(travel_held_down_keys[i]))
     }
 
 
     map = {};
-    for (var i = 0; i < harvest_held_down_key_codes.length; i++){
-      map[harvest_held_down_key_codes[i]] = false;
+    for (var i = 0; i < travel_held_down_key_codes.length; i++){
+      map[travel_held_down_key_codes[i]] = false;
     }
-    //console.log(map)
+    console.log(map)
 
   // $(document).keydown(function(e) {
   hold_down_key_listener = $(document).keydown(function(e) {
@@ -151,17 +162,23 @@ jsPsych.plugins["travel-mkre"] = (function() {
           delete keyPressed[e.keyCode]
         }, false); */
 
+    // now we want the harvest phase - we want numbers in red to appear above the avatar
+    if (first_round_press & trial.use_last_person_pos){
+      reward_val = jsPsych.data.get().last(1).values()[0].reward_true;
+      first_round_press = false;
+    }else{
+      reward_val = start_reward + Math.randomGaussian(0, trial.start_reward_noise);
+    }
 
-
-
-    var harvest_keys_down = function(){
+    var travel_keys_down = function(){
       var n_down = 0;
-      for (var i = 0; i<harvest_held_down_keys.length; i++){
-        if (map[harvest_held_down_key_codes[i]] == true){
+      for (var i = 0; i<travel_held_down_keys.length; i++){
+        if (map[travel_held_down_key_codes[i]] == true){
           n_down = n_down + 1;
         }
       }
-      return (n_down >= harvest_held_down_keys.length - 1) // give a bit of leeway so it might work for more people...
+    //  console.log('n_down ' + n_down)
+      return (n_down == travel_held_down_keys.length)
     }
 
 
@@ -185,13 +202,25 @@ jsPsych.plugins["travel-mkre"] = (function() {
     // counter for what round you're on
     var round = 1; // each time you exit, round goes up by 1
 
-    var person_pos = 1;
-    var tree_pos = (person_pos + n_travel_steps + 2) % n_steps_screen;
+    var first_round_press = true;
+    var person_pos = jsPsych.data.get().last(1).values()[0].person_pos;
+    var person_pos_exists = (typeof person_pos !== 'undefined');
+    console.log("person_pos_exists" + person_pos_exists)
+
+    if (trial.use_last_person_pos & person_pos_exists){
+      var person_pos = jsPsych.data.get().last(1).values()[0].person_pos; //
+      var tree_pos = jsPsych.data.get().last(1).values()[0].tree_pos;
+      var at_tree = jsPsych.data.get().last(1).values()[0].at_tree;
+      console.log("at tree: " + at_tree)
+    }else{
+      var person_pos = 1;
+      var tree_pos = (person_pos + n_travel_steps + 2) % n_steps_screen;
+      var at_tree = false;
+    }
     var total_dist = max_pos - min_pos;
     var increment = total_dist/n_steps_screen;
     var person_x_pos_middle = min_pos + person_pos*increment;
     var tree_x_pos_middle = min_pos + tree_pos*increment;
-    var at_tree = false;
 
     var press_success_prob_travel = trial.press_success_prob_travel;
     var press_success_prob_harvest = trial.press_success_prob_harvest;
@@ -235,12 +264,23 @@ jsPsych.plugins["travel-mkre"] = (function() {
           .attr("cx", tree_x_ctr).attr("cy", tree_y)
           .attr("r", tree_circ_rad)
           .style("fill", "purple").style("opacity",1);
+    if (at_tree){ // if we're at the tree, change the color and call the harvest phase.
+      d3.select(".treecirc").style("fill", "yellow");
+    }
 
 
     place_img(person, "person", person_x_pos_middle - person_w/2,person_y,
               person_w, person_h, 1);
 
     place_text("" , "prompt", par.w/2, prompt_txt_y, par.h/40, 1, "White")
+
+    if (trial.show_change_message){
+      // show change message for 8 seconds...
+      place_text("The environment has changed! ", "change_message", par.w/2, par.h/3, par.h/30, 1, "Red")
+      wait_for_time(8000, function(){
+        d3.select(".change_message").remove()
+      })
+    }
 
 
       var get_key_down_list = function(){
@@ -280,8 +320,8 @@ jsPsych.plugins["travel-mkre"] = (function() {
           }*/
 
 
-          if (harvest_keys_down()){
-            /*d3.select("svg").append("line")
+          if (travel_keys_down()){
+            d3.select("svg").append("line")
               .attr("class", "keys_down")
               .attr("x1", 0)
               .attr("x1", person_x_pos_middle)
@@ -290,11 +330,7 @@ jsPsych.plugins["travel-mkre"] = (function() {
               .attr("y2", tree_y + tree_rect_height)
               .attr("stroke", "orange")
               .attr("stroke-width", 3)
-            d3.select(".treecirc").style("fill", "pink"); */
-            d3.select(".treerect").style("fill", "pink");
-          }else{
-            d3.select(".treerect").style("fill", "brown");
-          }
+            }
         }
 
       //  document.addEventListener('keydown', draw_keys_down(), false);
@@ -348,6 +384,8 @@ jsPsych.plugins["travel-mkre"] = (function() {
           .attr("fill", "white")
           .style("opacity",1)
           .text('Travel:')
+
+        //  first_press = false
     }
 
     var draw_harvest_key = function(){
@@ -397,6 +435,7 @@ jsPsych.plugins["travel-mkre"] = (function() {
     ////////////////////////////////////////
     // run the travel phase
     var travel_phase = function(){
+      first_round_press = false;
 
       if (show_prompt){
           //var text = 'Press ' + travel_key_cap + ' to TRAVEL to next tree.';
@@ -413,7 +452,7 @@ jsPsych.plugins["travel-mkre"] = (function() {
       //  draw_keys_down()
       //  draw_keys_down();
       //  console.log(keyPressed)
-        //console.log('travel_keys_down: ' + travel_keys_down())
+        console.log('travel_keys_down: ' + travel_keys_down())
 
         first_press = false;
 
@@ -426,12 +465,11 @@ jsPsych.plugins["travel-mkre"] = (function() {
         var choice_char = jsPsych.pluginAPI.convertKeyCodeToKeyCharacter(response.key);
 
         var correct_key = choice_char == travel_current_key;
-        //var correct_keys_down = travel_keys_down();
+        var correct_keys_down = travel_keys_down();
 
         // if they got the wrong key, just record the data and recall the response handler.
-        //if (!correct_key || !correct_keys_down){
+        if (!correct_key || !correct_keys_down){
       //    console.log('wrong key')
-      if (!correct_key){
 
           var data = {
             phase: "TRAVEL",
@@ -620,13 +658,18 @@ jsPsych.plugins["travel-mkre"] = (function() {
         }
 
       // now we want the harvest phase - we want numbers in red to appear above the avatar
-      reward_val = start_reward + Math.randomGaussian(0, trial.start_reward_noise);
+      if (first_round_press & trial.use_last_person_pos){
+        reward_val = jsPsych.data.get().last(1).values()[0].reward_true;
+        first_round_press = false;
+      }else{
+        reward_val = start_reward + Math.randomGaussian(0, trial.start_reward_noise);
+      }
 
       var rew_x = person_x_pos_middle;
       var rew_start_y = tree_y + tree_circ_rad;//person_y - 2*person_h;
       var rew_end_y = person_y;
 
-      var handle_harvest_response =  function(info){
+      var handle_harvest_response =   function(info){
             first_press = false
 
             console.log('harvest response heard')
@@ -702,9 +745,9 @@ jsPsych.plugins["travel-mkre"] = (function() {
                 // move the tree and call the travel function...
             } // end if travel key was pressed
             else{ // if travel key was not pressed
-              var correct_keys_down = harvest_keys_down();
 
-            if ((choice_char == harvest_current_key) && (correct_keys_down)) { // if current harvest key was pressed
+
+            if (choice_char == harvest_current_key){ // if current harvest key was pressed
               console.log('harvest key pressed')
               // update the harvest key
               harvest_key_idx = (harvest_key_idx + 1) % trial.harvest_key_seq.length;
@@ -874,10 +917,7 @@ jsPsych.plugins["travel-mkre"] = (function() {
 
         // kill hold down key listener -- jquery
 
-        person_pos = null;
-        tree_pos = null;
-        at_tree = false;
-        reward_val = null;
+
 
         if (typeof keyboardListener !== 'undefined') {
               jsPsych.pluginAPI.cancelKeyboardResponse(keyboardListener);
@@ -885,16 +925,32 @@ jsPsych.plugins["travel-mkre"] = (function() {
         d3.select('svg').remove()
 
         var trial_data = {
-              total_points: total_points
+              total_points: total_points,
+              person_pos: person_pos,
+              tree_pos: tree_pos,
+              at_tree: at_tree,
+              reward_true: reward_val
         };
+        person_pos = null;
+        tree_pos = null;
+        at_tree = false;
+        reward_val = null;
 
         jsPsych.finishTrial(trial_data);
       } // end end_trial
+      // person_pos = null;
+      //tree_pos = null;
+      // at_tree = false;
+      // reward_val = null;
 
       // start the time.. on first successful travel press
       total_msec = 60*1000*trial.time_min;
       //wait_for_time(total_msec, end_trial);
-      travel_phase();
+      if (at_tree){
+        harvest_phase();
+      }else{
+         travel_phase();
+       }
   };
   // count the round number
 

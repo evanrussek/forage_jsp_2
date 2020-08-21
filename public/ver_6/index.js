@@ -68,7 +68,7 @@ function task(uid){
   // create a reference to the database
   var db = firebase.firestore();
 
-  var run_name = 'run6';
+  var run_name = 'run7'; // 7
 
   // record new date and start time
   db.collection('foragetask').doc(run_name).collection('subjects').doc(uid).set({
@@ -91,43 +91,47 @@ function task(uid){
     // we'll vary the travel amount
     var reward_amounts = [60, 90, 120];
     var reward_names = ['LOW', 'MEDIUM', 'HIGH'];
-    var travel_names = ['EASY', 'HARD']; // note that this is really harvest names...
+    var travel_names = ['EASY', 'HARD'];
+    var harvest_key_seq = ['u'];
+    var harvest_prompt = ['u'];
 
-    var travel_key_seq = ['u'];
-    var travel_prompt = ['u'];
+    var travel_key_seq_hard = ['a'];
+    var travel_hold_down_keys_hard = ['0', '9', 'm','t','e'];
+    var travel_prompt_hard = ["Repeatedly press 'a' (left pinky) while holding down  't' , 'e' (left) and '0', '9', 'm' (right) to travel"];
+    var harvest_prompt_hard =  ["Repeatedly press 'u' to harvest or 'a' to travel"];
 
-    var harvest_key_seq_hard = ['a'];
-    var harvest_hold_down_keys_hard = ['0', '9', 'm','t','e'];
-    var travel_prompt_hard = ["Travel: repeatedly press 'u'"];
-    var harvest_prompt_hard =  ["Harvest: repeatedly press 'a' (left pinky) while holding down  't' , 'e' (left) and '0', '9', 'm' (right). Travel: repeatedly press 'u'"];
-
-    var harvest_hold_down_keys_easy = ['0', '9', 'm'];
-    var harvest_key_seq_easy =['f'];
-    var travel_prompt_easy =  ["Repeatedly press 'u' to travel"];
-    var harvest_prompt_easy=  ["Harvest: repeatedly press 'f' (left index) while holding down '0', '9', 'm' (right), Travel: repeatedly press 'u'"];
+    var travel_hold_down_keys_easy = ['0', '9', 'm'];
+    var travel_key_seq_easy =['f'];
+    var travel_prompt_easy = ["Repeatedly press 'f' (left index) while holding down '0', '9', 'm' (right) to travel"];
+    var harvest_prompt_easy=  ["Repeatedly press 'u' to harvest or 'f' to travel"];
 
     var n_rounds = 1;
 
+    var easy_first = 0;//(Math.random() < .5);
+
+    // block the hard and easy trials...
+
     var total_points_arr = [];
 
-    var forage_trials = [];
+
+    //// easy trials...
+    var forage_trials_easy = [];
     var trial_num = 0;
     for (r_idx = 0; r_idx < n_rounds; r_idx++){
       var this_round_trials = [];
-      for (d_idx = 0; d_idx < 2; d_idx++){ // key difficulty...
+      for (d_idx = 0; d_idx < 1; d_idx++){ // key difficulty...
         for (rew_idx = 0; rew_idx < reward_amounts.length; rew_idx++){ // travel index
           var this_rew_amount = reward_amounts[rew_idx];
+
           if (d_idx == 0){ // 0 is easy...
-              var this_travel_key_seq = travel_key_seq;
+              var this_travel_key_seq = travel_key_seq_easy;
               var this_travel_prompt = travel_prompt_easy;
-              var this_harvest_key_seq = harvest_key_seq_easy;
-              var this_harvest_held_down_keys = harvest_hold_down_keys_easy;
+              var this_travel_held_down_keys = travel_hold_down_keys_easy;
               var this_harvest_prompt = harvest_prompt_easy;
           }else{ // 1 is hard...
-            var this_travel_key_seq = travel_key_seq;
+            var this_travel_key_seq = travel_key_seq_hard;
             var this_travel_prompt = travel_prompt_hard;
-            var this_harvest_held_down_keys = harvest_hold_down_keys_hard;
-            var this_harvest_key_seq = harvest_key_seq_hard;
+            var this_travel_held_down_keys = travel_hold_down_keys_hard;
             var this_travel_prompt = travel_prompt_hard;
             var this_harvest_prompt = harvest_prompt_hard;
           }
@@ -136,29 +140,89 @@ function task(uid){
             type: 'travel-mkre',
             start_reward: reward_amounts[rew_idx],
             decay: .98,
-            n_travel_steps: 19, // longer travel period...
+            n_travel_steps: 16,
             press_success_prob_travel: .8,
             press_success_prob_harvest: .5,
             reward_noise: 2.5,
             start_reward_noise: 4,
-            time_min: 2.34,
+            time_min: 3, // 3 minute rounds - so 9 minute trial
             travel_key_seq:this_travel_key_seq,
             travel_prompt: this_travel_prompt,
-            harvest_key_seq: this_harvest_key_seq,
+            harvest_key_seq: harvest_key_seq,
             harvest_prompt: this_harvest_prompt,
-            harvest_held_down_keys: this_harvest_held_down_keys,
+            travel_held_down_keys: this_travel_held_down_keys,
             rew_idx: r_idx,
             d_idx: d_idx,
             reward_name: reward_names[rew_idx],
-            travel_name: travel_names[d_idx]
+            travel_name: travel_names[d_idx],
+            show_change_message: true
           }
           this_round_trials.push(this_trial)
         }
       }
       //forage_trials = forage_trials.concat(this_round_trials);
-      forage_trials = forage_trials.concat(jsPsych.randomization.shuffle(this_round_trials,1));
+      forage_trials_easy = forage_trials_easy.concat(jsPsych.randomization.shuffle(this_round_trials,1));
     }
 
+
+        //// hard_trials
+        var forage_trials_hard= [];
+        var trial_num = 0;
+        for (r_idx = 0; r_idx < n_rounds; r_idx++){
+          var this_round_trials = [];
+          for (d_idx = 1; d_idx < 2; d_idx++){ // key difficulty...
+            for (rew_idx = 0; rew_idx < reward_amounts.length; rew_idx++){ // travel index
+              var this_rew_amount = reward_amounts[rew_idx];
+
+              if (d_idx == 0){ // 0 is easy...
+                  var this_travel_key_seq = travel_key_seq_easy;
+                  var this_travel_prompt = travel_prompt_easy;
+                  var this_travel_held_down_keys = travel_hold_down_keys_easy;
+                  var this_harvest_prompt = harvest_prompt_easy;
+              }else{ // 1 is hard...
+                var this_travel_key_seq = travel_key_seq_hard;
+                var this_travel_prompt = travel_prompt_hard;
+                var this_travel_held_down_keys = travel_hold_down_keys_hard;
+                var this_travel_prompt = travel_prompt_hard;
+                var this_harvest_prompt = harvest_prompt_hard;
+              }
+              trial_num = trial_num + 1;
+              var this_trial = {
+                type: 'travel-mkre',
+                start_reward: reward_amounts[rew_idx],
+                decay: .98,
+                n_travel_steps: 16,
+                press_success_prob_travel: .8,
+                press_success_prob_harvest: .5,
+                reward_noise: 2.5,
+                start_reward_noise: 4,
+                time_min: 3, // 180 seconds...
+                travel_key_seq:this_travel_key_seq,
+                travel_prompt: this_travel_prompt,
+                harvest_key_seq: harvest_key_seq,
+                harvest_prompt: this_harvest_prompt,
+                travel_held_down_keys: this_travel_held_down_keys,
+                rew_idx: r_idx,
+                d_idx: d_idx,
+                reward_name: reward_names[rew_idx],
+                travel_name: travel_names[d_idx],
+                show_change_message: true
+              }
+              this_round_trials.push(this_trial)
+            }
+          }
+          //forage_trials = forage_trials.concat(this_round_trials);
+          forage_trials_hard = forage_trials_hard.concat(jsPsych.randomization.shuffle(this_round_trials,1));
+        }
+
+        forage_trials = [];
+        if (easy_first){
+          forage_trials = forage_trials.concat(forage_trials_easy);
+          forage_trials = forage_trials.concat(forage_trials_hard);
+        }else{
+          forage_trials = forage_trials.concat(forage_trials_hard);
+          forage_trials = forage_trials.concat(forage_trials_easy);
+        }
 
 
 // add a trial num
@@ -191,12 +255,14 @@ for (var i = 0;i < forage_trials.length;  i++){
 
 
 
+
+
 var make_start_trial = function(travel_prompt, harvest_prompt, rew_text, trial_num){
     var text_trial = {
       type: 'evan-display-text',
       line_1: "Traveling to the new environment",
-      line_2: "Trees in this environment will all start with a " + rew_text + " number of points.",
-      line_3: harvest_prompt,
+      line_2: "How rewarding trees are might change over time.",
+      line_3: travel_prompt + ". Press 'u' to harvest",
     }
   return text_trial
 }
@@ -208,11 +274,12 @@ var make_summary_trial = function(travel_prompt, harvest_prompt, trial_num){
       var lasttimelinedata = jsPsych.data.getLastTimelineData();
       var total_points = lasttimelinedata.values().pop().total_points
       total_points_arr.push(total_points);
+      last_two_total_points = total_points_arr[trial_num - 2] + total_points_arr[trial_num - 1] + total_points_arr[trial_num - 3];
       console.log(lasttimelinedata)
-      return "You collected " + total_points + " points.";
+      return "You collected " + total_points + " points in the last 6 minute period.";
     },
-    line_2: "Great work.",
-    line_3: "You've completed " + (trial_num)+ " out of 6 rounds.",
+    line_2: "Great work. Take a short break.",
+    line_3: "You've completed " + (trial_num)/3 + " out of 2 rounds.",
   }
   return text_trial
 }
@@ -222,23 +289,31 @@ trials = forage_trials;
 var timeline = [];
 timeline.push(full_screen);
 
-timeline = timeline.concat(intro_w_trials);
+// timeline = timeline.concat(intro_w_trials);
 
 for (i = 0; i < trials.length; i++){
   var next_task_trial = trials[i];
-
-  var info_trial = {
-    type: 'evan-select-env',
-    rew_cond: next_task_trial.reward_name,
-    travel_cond: next_task_trial.travel_name
+  if (i == 0){
+    next_task_trial.show_change_message = false;
   }
+
+  //var info_trial = {
+  //  type: 'evan-select-env',
+  //  rew_cond: next_task_trial.reward_name,
+  //  travel_cond: next_task_trial.travel_name
+  //}
 
   var next_trial_text = make_start_trial(next_task_trial.travel_prompt, next_task_trial.harvest_prompt,next_task_trial.reward_name, i + 1);
   var summary_trial = make_summary_trial(next_task_trial.travel_prompt, next_task_trial.harvest_prompt, i + 1);
-  timeline.push(info_trial);
-  timeline.push(next_trial_text);
+  //timeline.push(info_trial);
+  //timeline.push(next_trial_text);
+  if (i == 0){
+    timeline.push(next_trial_text);
+  }
   timeline.push(next_task_trial);
-  timeline.push(summary_trial);
+  if (i == 2 | i == 5){
+    timeline.push(summary_trial);
+  }
 }
 
   // timeline = [];
@@ -365,8 +440,8 @@ document.getElementById('consent').innerHTML = "        <p><b>Who is conducting 
     "\n" +
     "        <p><b>What will happen to me if I take part?</b><p>\n" +
     "        <p>\n" +
-    "            You will play one or more online computer games, which will last approximately 25 minutes. You will receive\n" +
-    "            at least 3.25 GBP for helping us out with an opportunity for an additional bonus depending on your choices. The amount may vary with the decisions you make in the games.\n" +
+    "            You will play one or more online computer games, which will last approximately 28 minutes. You will receive\n" +
+    "            at least 3.75 GBP for helping us out with an opportunity for an additional bonus depending on your choices. The amount may vary with the decisions you make in the games.\n" +
     "            Remember, you are free to withdraw at any time without giving a reason.\n" +
     "        </p>\n" +
     "\n" +

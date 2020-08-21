@@ -62,7 +62,7 @@ jsPsych.plugins["evan-select-env"] = (function() {
 
    place_text("Choosing a next environment...", "prompt", par.w/4, par.h/8, 45, 1, "White")
    place_text("Tree point richness: ", "prompt", par.w/3, par.h/5, 35, 1, "blue")
-   place_text("Harvest key press: ", "prompt", 1.75*par.w/3, par.h/5, 35, 1, "red")
+   place_text("Travel key press: ", "prompt", 1.75*par.w/3, par.h/5, 35, 1, "red")
 
    var rect_height = par.h/8
 
