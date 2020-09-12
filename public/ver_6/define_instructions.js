@@ -20,7 +20,7 @@ var practice_trial2 = {
   press_success_prob_harvest: .5,
   reward_noise: 2.5,
   start_reward_noise: 4,
-  time_min: .01,
+  time_min: 1,
   travel_key_seq: ['a'],
   travel_prompt: ["Repeatedly press 'a' (left pinky) while holding down  't' , 'e' (left) and '0', '9', 'm' (right) to travel"],
   harvest_key_seq: ['u'],
@@ -40,7 +40,7 @@ var practice_trial1 = { // this is the easy condition...
   press_success_prob_harvest: .5,
   reward_noise: 2.5,
   start_reward_noise: 4,
-  time_min: .01,
+  time_min: 1,
   travel_key_seq: ['f'],
 	harvest_key_seq: ['u'],
   travel_prompt: ["Repeatedly press 'f' (left index) while holding down '0', '9', 'm' (right) to travel"],
@@ -87,7 +87,7 @@ var instruction_pages_c = {
 var questions = ["How long will each round last?", // 1
 				"What determines your bonus?", // 2
 				"How do you travel to a tree?", // 3
-				"Is the TRAVEL sequence the same in every round?", // 4
+				"Are the TRAVEL keys the same in every round?", // 4
 				"When you are at a tree, how do you collect points?", // 5
 				"What happens to the number of points a tree provides over time?", // 6
 				"When you are at a tree, how do you leave the tree?", // 7

@@ -107,7 +107,7 @@ function task(uid){
 
     var n_rounds = 1;
 
-    var easy_first = 0;//(Math.random() < .5);
+    easy_first = (Math.random() < .5);
 
     // block the hard and easy trials...
 
@@ -232,7 +232,6 @@ for (var i = 0;i < forage_trials.length;  i++){
 
 var task_name = 'foragetask';
 
-
 //db.collection("tasks").doc('meg_generalisation_8').collection('subjects').doc(uid).collection('trial_data').doc('trial_' + trial_data.trial_number.toString()).set({trial_data});
 
 // add a trial num
@@ -278,7 +277,7 @@ var make_summary_trial = function(travel_prompt, harvest_prompt, trial_num){
       console.log(lasttimelinedata)
       return "You collected " + total_points + " points in the last 6 minute period.";
     },
-    line_2: "Great work. Take a short break.",
+    line_2: "Great work.",
     line_3: "You've completed " + (trial_num)/3 + " out of 2 rounds.",
   }
   return text_trial
@@ -289,12 +288,13 @@ trials = forage_trials;
 var timeline = [];
 timeline.push(full_screen);
 
-// timeline = timeline.concat(intro_w_trials);
+timeline = timeline.concat(intro_w_trials);
 
 for (i = 0; i < trials.length; i++){
   var next_task_trial = trials[i];
   if (i == 0){
     next_task_trial.show_change_message = false;
+    next_task_trial.use_last_person_pos = false;
   }
 
   //var info_trial = {
@@ -307,7 +307,7 @@ for (i = 0; i < trials.length; i++){
   var summary_trial = make_summary_trial(next_task_trial.travel_prompt, next_task_trial.harvest_prompt, i + 1);
   //timeline.push(info_trial);
   //timeline.push(next_trial_text);
-  if (i == 0){
+  if (i == 0 | i == 3){
     timeline.push(next_trial_text);
   }
   timeline.push(next_task_trial);
@@ -372,7 +372,7 @@ for (i = 0; i < trials.length; i++){
         var random_total_points = jsPsych.randomization.sampleWithoutReplacement(total_points_arr, 1);
 
         var string = 'You have finished the task. Thank you for your contribution to science! \
-                 On a randomly selected round, you recevieved ' + random_total_points + ' points. Your bonus will be based on this number. \
+                  You will receive your payment and bonus shortly. \
               <b> PLEASE CLICK END TASK TO SUBMIT THE TASK TO PROLIFIC </b>.';
 
         db.collection('foragetask').doc(run_name).collection('subjects').doc(uid).collection('taskdata').doc('end').set({
@@ -408,7 +408,6 @@ console.log(timeline)
     //on_finish: saveData
     }
   });
-
 }
 
 document.getElementById('header_title').innerHTML = "Online studies in learning, decision-making and cognition: Information and consent";
